@@ -64,9 +64,10 @@ module AllureRubyAdaptorApi
 
       def start_step(suite, test, step)
         MUTEX.synchronize do
-          LOGGER.debug "Starting step #{suite}.#{test}.#{step}"
-          self.suites[suite][:tests][test][:steps][step] = {
-              :title => step,
+          step_id = step.fetch(:id, step[:name])
+          LOGGER.debug "Starting step #{suite}.#{test}.#{step[:name]}"
+          self.suites[suite][:tests][test][:steps][step_id] = {
+              :title => step[:name],
               :start => timestamp,
               :attachments => []
           }
@@ -78,7 +79,7 @@ module AllureRubyAdaptorApi
         step = opts[:step]
         file = opts[:file]
         title = opts[:title] || File.basename(file)
-        LOGGER.debug  "Adding attachment #{opts[:title]} to #{suite}.#{test}#{step.nil? ? "" : ".#{step}"}"
+        LOGGER.debug  "Adding attachment #{opts[:title]} to #{suite}.#{test}#{step.nil? ? "" : ".#{step[:name]}"}"
         dir = Pathname.new(Dir.pwd).join(config.output_dir)
         FileUtils.mkdir_p(dir)
         file_extname = File.extname(file.path.downcase)
@@ -97,15 +98,17 @@ module AllureRubyAdaptorApi
         if step.nil?
           self.suites[suite][:tests][test][:attachments] << attach
         else
-          self.suites[suite][:tests][test][:steps][step][:attachments] << attach
+          step_id = step.fetch(:id, step[:name])
+          self.suites[suite][:tests][test][:steps][step_id][:attachments] << attach
         end
       end
 
       def stop_step(suite, test, step, status = :passed)
         MUTEX.synchronize do
-          LOGGER.debug "Stopping step #{suite}.#{test}.#{step}"
-          self.suites[suite][:tests][test][:steps][step][:stop] = timestamp
-          self.suites[suite][:tests][test][:steps][step][:status] = status
+          step_id = step.fetch(:id, step[:name])
+          LOGGER.debug "Stopping step #{suite}.#{test}.#{step[:name]}"
+          self.suites[suite][:tests][test][:steps][step_id][:stop] = timestamp
+          self.suites[suite][:tests][test][:steps][step_id][:status] = status
         end
       end
 
@@ -136,10 +139,10 @@ module AllureRubyAdaptorApi
                       end
                     end
                     xml.steps do
-                      test[:steps].each do |step_title, step_obj|
+                      test[:steps].each do |step_id, step_obj|
                         xml.step(:start => step_obj[:start] || 0, :stop => step_obj[:stop] || 0, :status => step_obj[:status]) do
-                          xml.send :name, step_title
-                          xml.send :title, step_title
+                          xml.send :name, step_obj[:title]
+                          xml.send :title, step_obj[:title]
                           xml_attachments(xml, step_obj[:attachments])
                         end
                       end
