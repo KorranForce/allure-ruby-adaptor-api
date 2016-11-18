@@ -18,9 +18,9 @@ module AllureRubyAdaptorApi
         init_suites
         MUTEX.synchronize do
           if self.suites[suite]
-            LOGGER.debug "Resuming case_or_suite #{suite} with labels #{labels}"
+            LOGGER.debug "Resuming case_or_suite #{suite.to_s.force_encoding("utf-8")} with labels #{labels}"
           else
-            LOGGER.debug "Starting case_or_suite #{suite} with labels #{labels}"
+            LOGGER.debug "Starting case_or_suite #{suite.to_s.force_encoding("utf-8")} with labels #{labels}"
             self.suites[suite] = {
                 :title => suite,
                 :start => timestamp,
@@ -52,7 +52,7 @@ module AllureRubyAdaptorApi
           end
         end
         MUTEX.synchronize do
-          LOGGER.debug "Stopping test #{suite}.#{test}"
+          LOGGER.debug "Stopping test #{suite.to_s.force_encoding("utf-8")}.#{test.to_s.force_encoding("utf-8")}"
           self.suites[suite][:tests][test][:stop] = timestamp(result[:finished_at])
           self.suites[suite][:tests][test][:start] = timestamp(result[:started_at]) if result[:started_at]
           self.suites[suite][:tests][test][:status] = result[:status]
@@ -69,7 +69,7 @@ module AllureRubyAdaptorApi
       def start_step(suite, test, step)
         MUTEX.synchronize do
           step_id = step.fetch(:id, step[:name])
-          LOGGER.debug "Starting step #{suite}.#{test}.#{step[:name]}"
+          LOGGER.debug "Starting step #{suite.to_s.force_encoding("utf-8")}.#{test.to_s.force_encoding("utf-8")}.#{step[:name].to_s.force_encoding("utf-8")}"
           self.suites[suite][:tests][test][:steps][step_id] = {
               :title => step[:name],
               :start => timestamp,
