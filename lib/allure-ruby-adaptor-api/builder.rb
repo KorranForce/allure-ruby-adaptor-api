@@ -34,7 +34,7 @@ module AllureRubyAdaptorApi
       def start_test(suite, test, labels = {:severity => :normal})
         MUTEX.synchronize do
           LOGGER.debug "Starting test #{suite}.#{test} with labels #{labels}"
-          self.suites[suite][:tests][test] = {
+          self.suites[suite][:tests][test.to_s.force_encoding("utf-8")] = {
               :title => test,
               :start => timestamp,
               :failure => nil,
