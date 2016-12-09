@@ -110,7 +110,7 @@ module AllureRubyAdaptorApi
       def stop_step(suite, test, step, status = :passed)
         MUTEX.synchronize do
           step_id = step.fetch(:id, step[:name])
-          LOGGER.debug "Stopping step #{suite}.#{test}.#{step[:name]}"
+          LOGGER.debug "Stopping step #{suite.to_s.force_encoding("utf-8")}.#{test.to_s.force_encoding("utf-8")}.#{step[:name].to_s.force_encoding("utf-8")}"
           self.suites[suite][:tests][test][:steps][step_id][:stop] = timestamp
           self.suites[suite][:tests][test][:steps][step_id][:status] = status
         end
