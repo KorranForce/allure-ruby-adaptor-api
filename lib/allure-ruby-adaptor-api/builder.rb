@@ -62,6 +62,8 @@ module AllureRubyAdaptorApi
                 :stacktrace => ((result[:exception] && result[:exception].backtrace) || []).map { |s| s.to_s }.join("\r\n"),
                 :message => result[:exception].to_s,
             }
+            LOGGER.debug "Failure message: #{self.suites[suite][:tests][test][:failure][:message]}"
+            LOGGER.debug "Failure stacktrace: #{self.suites[suite][:tests][test][:failure][:stacktrace]}"
           end
 
         end
