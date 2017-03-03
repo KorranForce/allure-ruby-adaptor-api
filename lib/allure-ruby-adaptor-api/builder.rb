@@ -23,7 +23,7 @@ module AllureRubyAdaptorApi
             LOGGER.debug "Starting case_or_suite #{suite} with labels #{labels}"
             self.suites[suite] = {
                 :title => suite,
-                :start => timestamp,
+                :start => timestamp(labels.delete(:start)),
                 :tests => {},
                 :labels => add_default_labels(labels)
             }
@@ -31,12 +31,20 @@ module AllureRubyAdaptorApi
         end
       end
 
-      def start_test(suite, test, labels = {:severity => :normal})
+      def stop_suite(title)
+        init_suites
+        MUTEX.synchronize do
+          LOGGER.debug "Stopping case_or_suite #{title}"
+          self.suites[title][:stop] = timestamp
+        end
+      end
+
+      def start_test(suite, test, labels = {:severity => :normal, :start=>Time.now})
         MUTEX.synchronize do
           LOGGER.debug "Starting test #{suite}.#{test} with labels #{labels}"
           self.suites[suite][:tests][test] = {
               :title => test,
-              :start => timestamp,
+              :start => timestamp(labels.delete(:start)),
               :failure => nil,
               :steps => [],
               :attachments => [],
@@ -55,7 +63,7 @@ module AllureRubyAdaptorApi
         MUTEX.synchronize do
           LOGGER.debug "Stopping test #{suite}.#{test}"
           self.suites[suite][:tests][test][:stop] = timestamp(result[:finished_at])
-          self.suites[suite][:tests][test][:start] = timestamp(result[:started_at]) if result[:started_at]
+          self.suites[suite][:tests][test][:start] = timestamp(result[:started_at])
           self.suites[suite][:tests][test][:status] = result[:status]
           if (result[:status].to_sym != :passed)
             self.suites[suite][:tests][test][:failure] = {
@@ -74,9 +82,17 @@ module AllureRubyAdaptorApi
           LOGGER.debug "Starting step #{suite}.#{test}.#{step[:title]}"
           self.suites[suite][:tests][test][:steps][step[:index]] = {
               :title => step[:title],
-              :start => timestamp,
+              :start => timestamp(step[:start]),
               :attachments => []
           }
+        end
+      end
+
+      def stop_step(suite, test, step, status = :passed)
+        MUTEX.synchronize do
+          LOGGER.debug "Stopping step #{suite}.#{test}.#{step[:title]}"
+          self.suites[suite][:tests][test][:steps][step[:index]][:stop] = timestamp(step[:stop])
+          self.suites[suite][:tests][test][:steps][step[:index]][:status] = status
         end
       end
 
@@ -105,22 +121,6 @@ module AllureRubyAdaptorApi
           self.suites[suite][:tests][test][:attachments] << attach
         else
           self.suites[suite][:tests][test][:steps][step[:index]][:attachments] << attach
-        end
-      end
-
-      def stop_step(suite, test, step, status = :passed)
-        MUTEX.synchronize do
-          LOGGER.debug "Stopping step #{suite}.#{test}.#{step[:title]}"
-          self.suites[suite][:tests][test][:steps][step[:index]][:stop] = timestamp
-          self.suites[suite][:tests][test][:steps][step[:index]][:status] = status
-        end
-      end
-
-      def stop_suite(title)
-        init_suites
-        MUTEX.synchronize do
-          LOGGER.debug "Stopping case_or_suite #{title}"
-          self.suites[title][:stop] = timestamp
         end
       end
 
