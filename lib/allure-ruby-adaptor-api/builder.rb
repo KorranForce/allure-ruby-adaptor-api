@@ -62,7 +62,7 @@ module AllureRubyAdaptorApi
 				end
 				MUTEX.synchronize do
 					LOGGER.debug "Stopping test #{suite}.#{test}"
-					self.suites[suite][:tests][test][:start] = timestamp(result[:start]) unless self.suites[suite][:tests][test][:start]
+					self.suites[suite][:tests][test][:start] ||= timestamp(result[:start])
 					self.suites[suite][:tests][test][:stop] = timestamp(result[:stop])
 					self.suites[suite][:tests][test][:status] = result[:status]
 					if (result[:status].to_sym != :passed)
